@@ -1,53 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Pete's Pet Shop</title>
+    <title>CASS Ethereum DApp Registry (CEDAR)</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
+    <style>
+        .record-type-image {
+            float: left;
+            min-width: 90px;
+            min-height: 90px;
+        }
+        
+        .btn-unregister,
+        .btn-update,
+        .btn-transfer,
+        .btn-identify,
+        .btn-add {
+            float: right;
+            margin-left: .5rem;
+        }
+        
+        .record-timestamp {
+            float: right;
+            color: darkgray;
+        }
+        
+        .records {
+            margin-top: 1rem;
+        }
+        
+        .registerDomain-url {
+            display: block;
+        }
+        
+        .btn-registerDomain {}
+        
+        .error {
+            color: darkred;
+        }
+        
+        .addRecord-url,
+        .addRecord-recipient,
+        .addRecord-hash,
+        .addRecord-agent {
+            display: block;
+            width: calc(100% - 100px);
+            margin-bottom: 1rem;
+        }
+
+    </style>
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-        <div class="col-xs-12 col-sm-8 col-sm-push-2">
-          <h1 class="text-center">Pete's Pet Shop</h1>
-          <hr/>
-          <br/>
-        </div>
-      </div>
+</head>
 
-      <div id="petsRow" class="row">
-        <!-- PETS LOAD HERE -->
-      </div>
+<body>
+    <div class="container">
+        <div class="row">
+            <button class="btn btn-default btn-add" type="button">Add record</button>
+            <button class="btn btn-default btn-identify" type="button">Identify individual</button>
+            <button class="btn btn-default btn-registerDomain" type="button">Register Domain Name</button>
+            <div class="col-xs-12 col-sm-12">
+                <div>
+                    <center>
+                        <h1>CEDAR<br><small>CASS Ethereum DApp Registry</small></h1>
+                    </center>
+                </div>
+            </div>
+        </div>
+
+        <div id="registerDomain" class="row" style="display:none;">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <div class="panel panel-default panel-record">
+                    <div class="panel-heading">
+                        <span class="panel-subtitle record-timestamp"></span>
+                        <h3 class="panel-title"><a class="record-url">Register Domain Name</a></h3>
+                    </div>
+                    <div class="panel-body">
+                        Registering your domain does the following:
+                        <ul>
+                            <li>Creates a public, permanent record of the registration on the Ethereum Blockchain.</li>
+                            <li>Binds your domain name to the Ethereum address provided by <a href="https://chrome.google.com/webstore/detail/nkbihfbeogaeaoehlefnkodbefgpgknn">MetaMask</a> (or other Web3 provider)</li>
+                            <li>Consumes a bit of Ethereum 'Gas', which costs some money and helps prevent abuse.</li>
+                        </ul>
+                        You must host a binding file at https://your.domain/cedar.eth
+                        <ul>
+                            <li>This public file will be accessed by any party wishing to ensure the validity of URLs stored in this registry.</li>
+                            <li>Removal of the file will cause all records registered using this address and your domain to fail validation.</li>
+                            <li>This file must be available to cross-domain (CORS) requests.
+                                <ul>
+                                    <li>Apache2/HTTPD configuration (make sure the 'headers' library is enabled!)
+                                        <pre>    &lt;Files "cedar.eth"&gt;
+        Header set Access-Control-Allow-Origin "*"
+    &lt;/Files&gt;</pre>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>This file will be accessed often, but will be cached when possible.</li>
+                        </ul>
+                        <a class="btn-downloadSignature">Download binding file</a>
+                        <hr>
+                        <strong>Domain Name</strong>: <input class="registerDomain-url" placeholder="https://my.domain/" /><br/>
+                        <span class="btn-registerDomain-error error">Please input domain name.</span><br>
+                        <button class="btn btn-default" style="float:right" onclick="$(this).parents('.row').hide();">Close</button>
+                        <button class="btn btn-default btn-registerDomainName" disabled type="button">Register Domain Name</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="newRecord" class="row" style="display:none;">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <div class="panel panel-default panel-record">
+                    <div class="panel-heading">
+                        <span class="panel-subtitle record-timestamp"></span>
+                        <h3 class="panel-title"><a class="record-url">Register URL</a></h3>
+                    </div>
+                    <div class="panel-body">
+                        <img alt="90x90" data-src="holder.js/90x90" class="img-rounded img-center record-type-image" style="float:right;" data-holder-rendered="true">
+                        <strong>URL</strong>:
+                        <ul>
+                            <li>The record at this URL will be accessed to compute the hash.</li>
+                            <li>The record at this URL must be cross-domain (CORS) accessible.</li>
+                            <li>If the data at this URL changes, the registration will become invalid and require updating.</li>
+                        </ul>
+                        <input class="addRecord-url" />
+                        <strong>Recipient (optional)</strong>:
+                        <ul>
+                            <li>This recipient is pseudononymous, but should be treated like public information.</li>
+                            <li>Anyone who knows the text entered here (like an email address) can determine the recipient of this record.</li>
+                            <li>Additionally, the recipient's records are grouped.</li>
+                            <li>These weaknesses allow for access to a recipient's registered data without processing over all registered records.</li>
+                        </ul>
+                        <input class="addRecord-recipient" />
+                        <strong>Agent</strong>:
+                        <input disabled class="addRecord-agent" placeholder="Checking..." />
+                        <strong>Hash</strong>:
+                        <input class="addRecord-hash" placeholder="Checking...">
+                        <input type="checkbox" class="addRecord-canUpdate" checked> Allow owner to update hash?<br>
+                        <input type="checkbox" class="addRecord-canTransfer" checked> Allow transfer of ownership?<br>
+                        <input type="checkbox" class="addRecord-canUnregister" checked> Allow de-registration by the owner?<br><br>
+                        <span class="btn-addRecord-error error">Please input a URL.</span><br><br>
+                        <button class="btn btn-default" style="float:right" onclick="$(this).parents('.row').hide();">Close</button>
+                        <button class="btn btn-default btn-checkAddRecord" type="button">Compute Hash</button>
+                        <button class="btn btn-default btn-addRecord" disabled type="button">Register</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="records" class="row">
+        </div>
     </div>
 
-    <div id="petTemplate" style="display: none;">
-      <div class="col-sm-6 col-md-4 col-lg-3">
-        <div class="panel panel-default panel-pet">
-          <div class="panel-heading">
-            <h3 class="panel-title">Scrappy</h3>
-          </div>
-          <div class="panel-body">
-            <img alt="140x140" data-src="holder.js/140x140" class="img-rounded img-center" style="width: 100%;" src="https://animalso.com/wp-content/uploads/2017/01/Golden-Retriever_6.jpg" data-holder-rendered="true">
-            <br/><br/>
-            <strong>Breed</strong>: <span class="pet-breed">Golden Retriever</span><br/>
-            <strong>Age</strong>: <span class="pet-age">3</span><br/>
-            <strong>Location</strong>: <span class="pet-location">Warren, MI</span><br/><br/>
-            <button class="btn btn-default btn-adopt" type="button" data-id="0">Adopt</button>
-          </div>
+    <div id="recordTemplate" style="display: none;">
+        <div class="col-sm-12 col-md-6 col-lg-4">
+            <div class="panel panel-default panel-record">
+                <div class="panel-heading">
+                    <span class="panel-subtitle record-timestamp"></span>
+                    <h3 class="panel-title"><a class="record-url">Registered URL</a></h3>
+                </div>
+                <div class="panel-body">
+                    <img alt="90x90" data-src="holder.js/90x90" class="img-rounded img-center record-type-image" data-holder-rendered="true">
+                    <strong>Agent</strong>: <span class="record-agent">The owner of this website claims</span><br/>
+                    <strong>Recipient</strong>: <span class="record-recipient">this individual</span><br/>
+                    <strong>Integrity</strong>: <span class="record-integrity">that has not been altered.</span><br/><br/>
+                    <button class="btn btn-default btn-unregister" type="button">Deregister</button>
+                    <button class="btn btn-default btn-transfer" type="button">Transfer</button>
+                    <button class="btn btn-default btn-update" type="button">Update</button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -56,6 +187,8 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/web3.min.js"></script>
     <script src="js/truffle-contract.js"></script>
+    <script src="js/cedar.js"></script>
     <script src="js/app.js"></script>
-  </body>
+</body>
+
 </html>

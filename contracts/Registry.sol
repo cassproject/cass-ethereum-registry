@@ -2,6 +2,11 @@ pragma solidity ^0.4.17;
 
 contract Registry {
 
+    function Registry() public
+    {
+        records.length++;
+    }
+
     struct Record {
         address owner;
         uint createdTs;
@@ -15,11 +20,16 @@ contract Registry {
 
     // Record Lookup Maps
     mapping(string => uint) byUrl;
+    function getIndexByUrl(string url) public view returns (uint index){
+        index = byUrl[url];
+    }
     mapping(address => uint[]) byOwner;
     mapping(string => uint[]) byRecipient;
     
     // Owner Lookup Maps
     mapping(address => string) public ownerDomain;
+    function myDomain() public view returns(string domain){return ownerDomain[msg.sender];}
+    
     mapping(string => address) domainOwner;
     function getDomainOwner(string url) public view returns(address addr)
     {
@@ -28,9 +38,12 @@ contract Registry {
 
     // Records  
     Record[] public records;
+    function recordsLength() public view returns(uint length){length = records.length;}
+    
     uint public numRecords;
     uint[] public recycling;
     
+    //Note: Require statements such as this do not refund gas, as they do not simulate an execution. Always check state before you invoke functions!
     modifier recordMustExist(string url) {
         //Require the location at url have a record.
         require(byUrl[url] != 0);
