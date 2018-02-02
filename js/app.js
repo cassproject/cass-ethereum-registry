@@ -20,7 +20,7 @@ App = {
     },
 
     initContract: function () {
-        $.getJSON('Registry.json', function (data) {
+        $.getJSON('build/contracts/Registry.json', function (data) {
             // Get the necessary contract artifact file and instantiate it with truffle-contract
             var RegistryArtifact = data;
             App.contracts.Registry = TruffleContract(RegistryArtifact);

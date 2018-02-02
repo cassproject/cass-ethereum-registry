@@ -1,5 +1,5 @@
 {
-  "server": {
-    "baseDir": ["./docs", "./build/contracts"]
-  }
+    "server": {
+        "baseDir": ["./"]
+    }
 }
