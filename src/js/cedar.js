@@ -6,7 +6,8 @@ var cedar = function (instance) {
                 var promise = null;
                 for (var i = 1; i < len.toNumber(); i++) {
                     promise = instance.records(i).then(function (record) {
-                        recordCallback(me.wrapRecord(record));
+                        if (me.wrapRecord(record).owner.replace(/[0x]+/g, "") != "")
+                            recordCallback(me.wrapRecord(record));
                     });
                 }
                 return promise;
@@ -17,6 +18,15 @@ var cedar = function (instance) {
         },
         register: function (record) {
             return instance.register(record.url, record.hash, record.recipient, record.canUpdate, record.canTransfer, record.canUnregister);
+        },
+        update: function (record) {
+            return instance.update(record.url, record.hash);
+        },
+        transfer: function (record) {
+            return instance.transfer(record.url, record.owner);
+        },
+        unregister: function (record) {
+            return instance.unregister(record.url);
         },
         wrapRecord: function (record) {
             return {

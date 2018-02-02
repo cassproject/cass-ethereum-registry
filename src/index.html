@@ -49,7 +49,9 @@
         .addRecord-url,
         .addRecord-recipient,
         .addRecord-hash,
-        .addRecord-agent {
+        .addRecord-agent,
+        .transferRecord-url,
+        .transferRecord-address {
             display: block;
             width: calc(100% - 100px);
             margin-bottom: 1rem;
@@ -70,10 +72,11 @@
             <button class="btn btn-default btn-add" type="button">Add record</button>
             <button class="btn btn-default btn-identify" type="button">Identify individual</button>
             <button class="btn btn-default btn-registerDomain" type="button">Register Domain Name</button>
+            <button class="btn btn-default btn-refresh" type="button" onclick="App.downloadRecords();">Refresh</button>
             <div class="col-xs-12 col-sm-12">
                 <div>
                     <center>
-                        <h1>CEDAR<br><small>CASS Ethereum DApp Registry</small></h1>
+                        <h1>CEDAR (Pre-Alpha)<br><small>CASS Ethereum DApp Registry</small></h1>
                     </center>
                 </div>
             </div>
@@ -84,7 +87,7 @@
                 <div class="panel panel-default panel-record">
                     <div class="panel-heading">
                         <span class="panel-subtitle record-timestamp"></span>
-                        <h3 class="panel-title"><a class="record-url">Register Domain Name</a></h3>
+                        <h3 class="panel-title">Register Domain Name</h3>
                     </div>
                     <div class="panel-body">
                         Registering your domain does the following:
@@ -118,15 +121,37 @@
                 </div>
             </div>
         </div>
+        <div id="transferRecord" class="row" style="display:none;">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <div class="panel panel-default panel-record">
+                    <div class="panel-heading">
+                        <span class="panel-subtitle record-timestamp"></span>
+                        <h3 class="panel-title">Transfer Registration</h3>
+                    </div>
+                    <div class="panel-body">
+                        Transferring a registration assigns ownership of the registration to another domain name:
+                        <ul>
+                            <li>You will lose the ability to update, transfer, or unregister the registration.</li>
+                            <li>The recipient must have a domain registered.</li>
+                        </ul>
+                        <hr>
+                        <strong>Domain Name</strong>: <input class="transferRecord-url" placeholder="https://target.domain/" />
+                        <strong>Ethereum Address</strong>: <input class="transferRecord-address" disabled placeholder="0x0000000000000000000000000000000000000000" />
+                        <span class="btn-transferRecord-error error">Please input domain name or address.</span><br>
+                        <button class="btn btn-default" style="float:right" onclick="$(this).parents('.row').hide();">Close</button>
+                        <button class="btn btn-default btn-transferRecord" disabled type="button">Transfer Record</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="newRecord" class="row" style="display:none;">
             <div class="col-sm-12 col-md-12 col-lg-12">
                 <div class="panel panel-default panel-record">
                     <div class="panel-heading">
                         <span class="panel-subtitle record-timestamp"></span>
-                        <h3 class="panel-title"><a class="record-url">Register URL</a></h3>
+                        <h3 class="panel-title">Register URL</h3>
                     </div>
                     <div class="panel-body">
-                        <img alt="90x90" data-src="holder.js/90x90" class="img-rounded img-center record-type-image" style="float:right;" data-holder-rendered="true">
                         <strong>URL</strong>:
                         <ul>
                             <li>The record at this URL will be accessed to compute the hash.</li>
@@ -157,25 +182,70 @@
                 </div>
             </div>
         </div>
+        <div id="welcome" class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <div class="panel panel-default panel-record">
+                    <div class="panel-heading">
+                        <span class="panel-subtitle record-timestamp"></span>
+                        <h3 class="panel-title">Welcome to CEDAR</h3>
+                    </div>
+                    <div class="panel-body">
+                        <strong>CEDAR lets you</strong>:
+                        <ul>
+                            <li>Publicly register digital learning, learner (or other) records on an Ethereum Blockchain.</li>
+                            <li>Create a provable binding tying an Ethereum address to a domain name.</li>
+                            <li>Manage registered records.</li>
+                        </ul>
+                        <strong>CEDAR</strong>:
+                        <ul>
+                            <li>Is a smart contract on the Ethereum Blockchain, and protects registrations with the same technology.</li>
+                            <li>Requires a small amount of payment (in the form of "Ethereum Gas") per operation, to prevent abuse.</li>
+                            <li>Validates website bindings for each record displayed and verifies the records have not changed.</li>
+                            <li>Lets you discover records for individuals whom have shared their identifier with you.</li>
+                        </ul>
+                        <strong>CEDAR performs the operations of a registry. This registry</strong>:
+                        <ul>
+                            <li>Does not store records, instead it stores references (URLs) to records.</li>
+                            <li>Keeps a "checksum" which ensures the records at each URL have not been altered since they were registered.</li>
+                        </ul>
+                        <strong>CEDAR lives on an Ethereum blockchain. The blockchain</strong>:
+                        <ul>
+                            <li>Provides an indellible history of all operations performed on CEDAR.</li>
+                            <li>Removes the need for a central authority.</li>
+                            <li>Is often reproduced and updated many thousands of time, making it reliable and very resistant to forgery.</li>
+                        </ul>
+                        <strong>To use CEDAR, you need</strong>:
+                        <ol>
+                            <li>The <a href="https://chrome.google.com/webstore/detail/nkbihfbeogaeaoehlefnkodbefgpgknn">MetaMask</a> plugin pointed at the Rinkeby Test Network (or another Ethereum web3 enabled browser.)</li>
+                        </ol>
+                        <strong>To register records on CEDAR, you need</strong>:
+                        <ol>
+                            <li>Ethereum to fund your endeavours, which can be found at the <a href="https://faucet.rinkeby.io/">Rinkeby Faucet</a>.</li>
+                            <li>A website that you can place a file on to bind that URL to your ethereum account.</li>
+                        </ol>
+                        <button class="btn btn-default" style="float:right" onclick="$(this).parents('.row').hide();">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="records" class="row">
         </div>
     </div>
 
     <div id="recordTemplate" style="display: none;">
-        <div class="col-sm-12 col-md-6 col-lg-4">
+        <div class="col-sm-12 col-md-6 col-lg-4 col-record">
             <div class="panel panel-default panel-record">
                 <div class="panel-heading">
                     <span class="panel-subtitle record-timestamp"></span>
-                    <h3 class="panel-title"><a class="record-url">Registered URL</a></h3>
+                    <h3 class="panel-title"><a class="record-url">URL</a></h3>
                 </div>
                 <div class="panel-body">
-                    <img alt="90x90" data-src="holder.js/90x90" class="img-rounded img-center record-type-image" data-holder-rendered="true">
                     <strong>Agent</strong>: <span class="record-agent">The owner of this website claims</span><br/>
                     <strong>Recipient</strong>: <span class="record-recipient">this individual</span><br/>
                     <strong>Integrity</strong>: <span class="record-integrity">that has not been altered.</span><br/><br/>
-                    <button class="btn btn-default btn-unregister" type="button">Deregister</button>
-                    <button class="btn btn-default btn-transfer" type="button">Transfer</button>
-                    <button class="btn btn-default btn-update" type="button">Update</button>
+                    <button class="btn btn-default btn-unregister" type="button" title="Detaches and clears the registration, but does not wipe the history!">Deregister</button>
+                    <button class="btn btn-default btn-transfer" type="button" title="Transfers the registration to another domain name owner.">Transfer</button>
+                    <button class="btn btn-default btn-update" type="button" title="Updates the hash of the registration to match the latest data.">Update</button>
                 </div>
             </div>
         </div>
