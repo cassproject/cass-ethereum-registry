@@ -74,11 +74,9 @@ App = {
         $(document).on('click', '.btn-identify', function () {
             var recipient = prompt("Please enter the identifier.");
             return App.contracts.Registry.deployed().then(function (instance) {
-                buffer = new TextEncoder("utf-8").encode(recipient + instance.address);
-                crypto.subtle.digest("SHA-256", buffer).then(function (hash) {
-                    App.recipientLookup[b64EncodeBuffer(hash)] = recipient;
-                    App.downloadRecords();
-                });
+                var hash = sha256.digest(recipient + instance.address);
+                App.recipientLookup[b64EncodeBuffer(hash)] = recipient;
+                App.downloadRecords();
             });
         });
     },
@@ -222,15 +220,12 @@ App = {
                     div.addClass("error").text("Record not reachable.");
                     App.get(record.url, function (result, b, response) {
                         var buffer = new TextEncoder("utf-8").encode(result);
-                        crypto.subtle.digest({
-                            name: "SHA-256"
-                        }, buffer).then(function (hash) {
-                            if (b64EncodeBuffer(hash) != record.hash) {
-                                div.addClass("error").text("Record has been modified since it was registered.");
-                                return;
-                            } else
-                                div.removeClass("error").text("OK.");
-                        }).catch(console.log);
+                        var hash = sha256.digest(result);
+                        if (b64EncodeBuffer(hash) != record.hash) {
+                            div.addClass("error").text("Record has been modified since it was registered.");
+                            return;
+                        } else
+                            div.removeClass("error").text("OK.");
                     });
                 });
             });
@@ -247,15 +242,13 @@ App = {
             registry.getRecord(url).then(function (record) {
                 if (record.canUpdate)
                     App.get(record.url, function (result, b, response) {
-                        var buffer = new TextEncoder("utf-8").encode(result);
-                        crypto.subtle.digest("SHA-256", buffer).then(function (hash) {
-                            if (b64EncodeBuffer(hash) != record.hash) {
-                                record = JSON.parse(JSON.stringify(record));
-                                record.hash = b64EncodeBuffer(hash);
-                                registry.update(record);
-                            } else
-                                alert("Hashes already match. Nothing to do.");
-                        });
+                        var hash = sha256.digest(result);
+                        if (b64EncodeBuffer(hash) != record.hash) {
+                            record = JSON.parse(JSON.stringify(record));
+                            record.hash = b64EncodeBuffer(hash);
+                            registry.update(record);
+                        } else
+                            alert("Hashes already match. Nothing to do.");
                     });
             });
         });
@@ -325,25 +318,21 @@ App = {
                     console.log(record);
                     $(".btn-addRecord-error").addClass("error").text("Retrieving record. If this takes too long, the URL may not have CORS headers appropriately set.");
                     App.get(url, function (result, b, response) {
-                        var buffer = new TextEncoder("utf-8").encode(result);
-                        crypto.subtle.digest("SHA-256", buffer).then(function (hash) {
-                            buffer = new TextEncoder("utf-8").encode($(".addRecord-recipient").val() + instance.address);
-                            crypto.subtle.digest("SHA-256", buffer).then(function (recipient) {
-                                $(".addRecord-hash").val(hex(hash));
-                                var record = {
-                                    url: url,
-                                    hash: b64EncodeBuffer(hash),
-                                    recipient: $(".addRecord-recipient").val() == "" ? "Not disclosed." : b64EncodeBuffer(recipient),
-                                    canUpdate: $(".addRecord-canUpdate").is(":checked"),
-                                    canTransfer: $(".addRecord-canTransfer").is(":checked"),
-                                    canUnregister: $(".addRecord-canUnregister").is(":checked")
-                                };
-                                App.recipientLookup[b64EncodeBuffer(recipient)] = $(".addRecord-recipient").val();
-                                App.candidateRecord = record;
-                                $(".btn-addRecord-error").removeClass("error").text("Ready to register.");
-                                $(".btn-addRecord").attr("disabled", null);
-                            });
-                        });
+                        var hash = sha256.digest(result);
+                        var recipient = sha256.digest($(".addRecord-recipient").val() + instance.address);
+                        $(".addRecord-hash").val(b64EncodeBuffer(hash));
+                        var record = {
+                            url: url,
+                            hash: b64EncodeBuffer(hash),
+                            recipient: $(".addRecord-recipient").val() == "" ? "Not disclosed." : b64EncodeBuffer(recipient),
+                            canUpdate: $(".addRecord-canUpdate").is(":checked"),
+                            canTransfer: $(".addRecord-canTransfer").is(":checked"),
+                            canUnregister: $(".addRecord-canUnregister").is(":checked")
+                        };
+                        App.recipientLookup[b64EncodeBuffer(recipient)] = $(".addRecord-recipient").val();
+                        App.candidateRecord = record;
+                        $(".btn-addRecord-error").removeClass("error").text("Ready to register.");
+                        $(".btn-addRecord").attr("disabled", null);
                     });
 
                 });
