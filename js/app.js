@@ -51,7 +51,12 @@ App = {
         $(document).on('click', '.btn-add', function () {
             $("#newRecord").show();
         });
-        $('.btn-downloadSignature')[0].href = "data:text/plain," + App.web3Provider.publicConfigStore._state.selectedAddress;
+        if (App.web3Provider.publicConfigStore === undefined) {
+            $(".btn-add").attr("disabled", true).attr("title", "You must install MetaMask and refresh this page to enable this button.");
+            $(".btn-registerDomain").attr("disabled", true).attr("title", "You must install MetaMask and refresh this page to enable this button.");
+        }
+        if (App.web3Provider.publicConfigStore !== undefined)
+            $('.btn-downloadSignature')[0].href = "data:text/plain," + App.web3Provider.publicConfigStore._state.selectedAddress;
         $('.btn-downloadSignature')[0].download = "cedar.eth";
         $(document).on('keyup', '.registerDomain-url', App.refreshDomainNameRegistration);
         $(document).on('keyup', '.transferRecord-url', App.refreshTransferRecord);
@@ -170,11 +175,11 @@ App = {
                 recordDiv.find('.record-url').attr("href", record.url);
                 recordDiv.find('.record-integrity').text("Determining...");
                 App.determineIntegrity(record, recordDiv.find('.record-integrity'));
-                if (!record.canUpdate || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
+                if (App.web3Provider.publicConfigStore === undefined || !record.canUpdate || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
                     recordDiv.find('.btn-update').hide();
-                if (!record.canTransfer || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
+                if (App.web3Provider.publicConfigStore === undefined || !record.canTransfer || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
                     recordDiv.find('.btn-transfer').hide();
-                if (!record.canUnregister || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
+                if (App.web3Provider.publicConfigStore === undefined || !record.canUnregister || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
                     recordDiv.find('.btn-unregister').hide();
                 App.get(record.url, function (result, b, request) {
                     var result = JSON.parse(result);
