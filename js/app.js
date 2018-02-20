@@ -41,47 +41,51 @@ App = {
     lastAgent: null,
     recipientLookup: {},
     bindEvents: function () {
-        $(document).on('click', '.btn-new', App.handleNew);
-        $(document).on('click', '.btn-update', App.handleUpdate);
-        $(document).on('click', '.btn-transfer', App.handleTransfer);
-        $(document).on('click', '.btn-unregister', App.handleUnregister);
-        $(document).on('click', '.btn-registerDomain', function () {
-            $("#registerDomain").show();
-        });
-        $(document).on('click', '.btn-add', function () {
-            $("#newRecord").show();
-        });
-        if (App.web3Provider.publicConfigStore === undefined) {
-            $(".btn-add").attr("disabled", true).attr("title", "You must install MetaMask and refresh this page to enable this button.");
-            $(".btn-registerDomain").attr("disabled", true).attr("title", "You must install MetaMask and refresh this page to enable this button.");
-        }
-        if (App.web3Provider.publicConfigStore !== undefined)
-            $('.btn-downloadSignature')[0].href = "data:text/plain," + App.web3Provider.publicConfigStore._state.selectedAddress;
-        $('.btn-downloadSignature')[0].download = "cedar.eth";
-        $(document).on('keyup', '.registerDomain-url', App.refreshDomainNameRegistration);
-        $(document).on('keyup', '.transferRecord-url', App.refreshTransferRecord);
-        $(document).on('keyup', '.transferRecord-address', App.refreshTransferRecord);
+        web3.eth.getAccounts(function (error, accounts) {
+            if (web3.eth.defaultAccount == null)
+                web3.eth.defaultAccount = accounts[0];
+            $(document).on('click', '.btn-new', App.handleNew);
+            $(document).on('click', '.btn-update', App.handleUpdate);
+            $(document).on('click', '.btn-transfer', App.handleTransfer);
+            $(document).on('click', '.btn-unregister', App.handleUnregister);
+            $(document).on('click', '.btn-registerDomain', function () {
+                $("#registerDomain").show();
+            });
+            $(document).on('click', '.btn-add', function () {
+                $("#newRecord").show();
+            });
+            if (accounts == null) {
+                $(".btn-add").attr("disabled", true).attr("title", "You must install MetaMask and refresh this page to enable this button.");
+                $(".btn-registerDomain").attr("disabled", true).attr("title", "You must install MetaMask and refresh this page to enable this button.");
+            }
+            if (accounts != null)
+                $('.btn-downloadSignature')[0].href = "data:text/plain," + accounts[0];
+            $('.btn-downloadSignature')[0].download = "cedar.eth";
+            $(document).on('keyup', '.registerDomain-url', App.refreshDomainNameRegistration);
+            $(document).on('keyup', '.transferRecord-url', App.refreshTransferRecord);
+            $(document).on('keyup', '.transferRecord-address', App.refreshTransferRecord);
 
-        $(document).on('click', '.btn-transferRecord', App.finishTransferRecord);
-        $(document).on('click', '.btn-checkAddRecord', App.refreshRegister);
-        $(document).on('click', '.btn-registerDomainName', App.registerDomainName);
-        var foo = function () {
-            $(".btn-addRecord").attr("disabled", true);
-            $(".btn-addRecord-error").addClass("error").text("Data has changed. Check again when ready.");
-            App.candidateRecord = null;
-        };
-        $(document).on('keyup', '.addRecord-url', foo);
-        $(document).on('keyup', '.addRecord-recipient', foo);
-        $(document).on('change', '.addRecord-canUpdate', foo);
-        $(document).on('change', '.addRecord-canTransfer', foo);
-        $(document).on('change', '.addRecord-canUnregister', foo);
-        $(document).on('click', '.btn-addRecord', App.registerCandidateRecord);
-        $(document).on('click', '.btn-identify', function () {
-            var recipient = prompt("Please enter the identifier.");
-            return App.contracts.Registry.deployed().then(function (instance) {
-                var hash = sha256.digest(recipient + instance.address);
-                App.recipientLookup[b64EncodeBuffer(hash)] = recipient;
-                App.downloadRecords();
+            $(document).on('click', '.btn-transferRecord', App.finishTransferRecord);
+            $(document).on('click', '.btn-checkAddRecord', App.refreshRegister);
+            $(document).on('click', '.btn-registerDomainName', App.registerDomainName);
+            var foo = function () {
+                $(".btn-addRecord").attr("disabled", true);
+                $(".btn-addRecord-error").addClass("error").text("Data has changed. Check again when ready.");
+                App.candidateRecord = null;
+            };
+            $(document).on('keyup', '.addRecord-url', foo);
+            $(document).on('keyup', '.addRecord-recipient', foo);
+            $(document).on('change', '.addRecord-canUpdate', foo);
+            $(document).on('change', '.addRecord-canTransfer', foo);
+            $(document).on('change', '.addRecord-canUnregister', foo);
+            $(document).on('click', '.btn-addRecord', App.registerCandidateRecord);
+            $(document).on('click', '.btn-identify', function () {
+                var recipient = prompt("Please enter the identifier.");
+                return App.contracts.Registry.deployed().then(function (instance) {
+                    var hash = sha256.digest(recipient + instance.address);
+                    App.recipientLookup[b64EncodeBuffer(hash)] = recipient;
+                    App.downloadRecords();
+                });
             });
         });
     },
@@ -115,28 +119,30 @@ App = {
             $(".btn-transferRecord-error").addClass("error").text("Checking registration...");
             var url = new URL("cedar.eth", $(".transferRecord-url").val()).toString();
             registry.getOwnerByDomain($(".transferRecord-url").val()).then(function (owner) {
-                $(".transferRecord-address").val(owner);
-                if (owner == App.web3Provider.publicConfigStore._state.selectedAddress) {
-                    $(".btn-transferRecord-error").addClass("error").text("Domain is registered but " + url + " does not exist or is not accessible (check CORS).");
-                    App.get(url, function (result, b, response) {
-                        if (result.trim().toLowerCase() == App.web3Provider.publicConfigStore._state.selectedAddress)
-                            $(".btn-transferRecord-error").addClass("error").text("Domain is registered to you. Binding file is OK.");
-                        else
-                            $(".btn-transferRecord-error").addClass("error").text("Domain is registered to you but " + url + " is showing the wrong address.");
-                    });
-                } else if (owner.replace(/[0x]+/g, "") == "") {
-                    $(".btn-transferRecord-error").addClass("error").text("Domain is not registered.");
-                } else {
-                    $(".btn-transferRecord-error").addClass("error").text("Domain is registered but " + url + " does not exist or is not accessible (check CORS).");
-                    App.get(url, function (result, b, response) {
-                        if (result.trim().toLowerCase() == owner) {
-                            $(".btn-transferRecord-error").removeClass("error").text("Domain is registered. Binding file found.");
-                            $(".btn-transferRecord").attr("disabled", null);
-                            App.transferRecord.owner = owner;
-                        } else
-                            $(".btn-transferRecord-error").addClass("error").text("Domain is registered but " + url + " is showing the wrong address.");
-                    });
-                }
+                web3.eth.getAccounts(function (error, accounts) {
+                    $(".transferRecord-address").val(owner);
+                    if (owner == accounts[0]) {
+                        $(".btn-transferRecord-error").addClass("error").text("Domain is registered but " + url + " does not exist or is not accessible (check CORS).");
+                        App.get(url, function (result, b, response) {
+                            if (result.trim().toLowerCase() == accounts[0])
+                                $(".btn-transferRecord-error").addClass("error").text("Domain is registered to you. Binding file is OK.");
+                            else
+                                $(".btn-transferRecord-error").addClass("error").text("Domain is registered to you but " + url + " is showing the wrong address.");
+                        });
+                    } else if (owner.replace(/[0x]+/g, "") == "") {
+                        $(".btn-transferRecord-error").addClass("error").text("Domain is not registered.");
+                    } else {
+                        $(".btn-transferRecord-error").addClass("error").text("Domain is registered but " + url + " does not exist or is not accessible (check CORS).");
+                        App.get(url, function (result, b, response) {
+                            if (result.trim().toLowerCase() == owner) {
+                                $(".btn-transferRecord-error").removeClass("error").text("Domain is registered. Binding file found.");
+                                $(".btn-transferRecord").attr("disabled", null);
+                                App.transferRecord.owner = owner;
+                            } else
+                                $(".btn-transferRecord-error").addClass("error").text("Domain is registered but " + url + " is showing the wrong address.");
+                        });
+                    }
+                });
             });
         });
     },
@@ -165,29 +171,31 @@ App = {
             registry = cedar(instance);
             $('#records').html("");
             return registry.getRecords(function (record) {
-                var recordsRow = $('#records');
-                var recordDiv = recordsRow.prepend($('#recordTemplate').html()).children().first();
-                recordDiv.find('.record-timestamp').text("Registered " + new Date(record.createdTs).toLocaleString());
-                recordDiv.find('.record-agent').text(record.recipient);
-                App.lookupAgent(record, recordDiv.find('.record-agent'));
-                recordDiv.find('.record-recipient').text("").text("Finding...");
-                App.lookupRecipient(record, recordDiv.find('.record-recipient'));
-                recordDiv.find('.record-url').attr("href", record.url);
-                recordDiv.find('.record-integrity').text("Determining...");
-                App.determineIntegrity(record, recordDiv.find('.record-integrity'));
-                if (App.web3Provider.publicConfigStore === undefined || !record.canUpdate || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
-                    recordDiv.find('.btn-update').hide();
-                if (App.web3Provider.publicConfigStore === undefined || !record.canTransfer || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
-                    recordDiv.find('.btn-transfer').hide();
-                if (App.web3Provider.publicConfigStore === undefined || !record.canUnregister || record.owner != App.web3Provider.publicConfigStore._state.selectedAddress)
-                    recordDiv.find('.btn-unregister').hide();
-                App.get(record.url, function (result, b, request) {
-                    var result = JSON.parse(result);
-                    var type = result["@type"];
-                    if (type === undefined)
-                        type = result.type;
-                    recordDiv.find('.record-url').text(type);
-                    //recordDiv.find('img').attr('src', data[i].picture);
+                web3.eth.getAccounts(function (error, accounts) {
+                    var recordsRow = $('#records');
+                    var recordDiv = recordsRow.prepend($('#recordTemplate').html()).children().first();
+                    recordDiv.find('.record-timestamp').text("Registered " + new Date(record.createdTs).toLocaleString());
+                    recordDiv.find('.record-agent').text(record.recipient);
+                    App.lookupAgent(record, recordDiv.find('.record-agent'));
+                    recordDiv.find('.record-recipient').text("").text("Finding...");
+                    App.lookupRecipient(record, recordDiv.find('.record-recipient'));
+                    recordDiv.find('.record-url').attr("href", record.url);
+                    recordDiv.find('.record-integrity').text("Determining...");
+                    App.determineIntegrity(record, recordDiv.find('.record-integrity'));
+                    if (accounts == null || !record.canUpdate || record.owner != accounts[0])
+                        recordDiv.find('.btn-update').hide();
+                    if (accounts == null || !record.canTransfer || record.owner != accounts[0])
+                        recordDiv.find('.btn-transfer').hide();
+                    if (accounts == null || !record.canUnregister || record.owner != accounts[0])
+                        recordDiv.find('.btn-unregister').hide();
+                    App.get(record.url, function (result, b, request) {
+                        var result = JSON.parse(result);
+                        var type = result["@type"];
+                        if (type === undefined)
+                            type = result.type;
+                        recordDiv.find('.record-url').text(type);
+                        //recordDiv.find('img').attr('src', data[i].picture);
+                    });
                 });
             });
         }).catch(function (err) {
@@ -375,26 +383,28 @@ App = {
             $(".btn-registerDomain-error").addClass("error").text("Checking registration...");
             var url = new URL("cedar.eth", $(".registerDomain-url").val()).toString();
             registry.getOwnerByDomain($(".registerDomain-url").val()).then(function (domain) {
-                if (domain == App.web3Provider.publicConfigStore._state.selectedAddress) {
-                    $(".btn-registerDomain-error").addClass("error").text("Domain is registered to you but " + url + " does not exist or is not accessible (check CORS).");
-                    App.get(url, function (result, b, response) {
-                        if (result.trim().toLowerCase() == App.web3Provider.publicConfigStore._state.selectedAddress)
-                            $(".btn-registerDomain-error").removeClass("error").text("Domain is registered to you. Binding file is OK.");
-                        else
-                            $(".btn-registerDomain-error").addClass("error").text("Domain is registered to you but " + url + " is showing the wrong address.");
-                    });
-                } else if (domain.replace(/[0x]+/g, "") == "") {
-                    $(".btn-registerDomain-error").addClass("error").text("Domain is available to register but " + url + " does not exist or is not accessible (check CORS).");
-                    App.get(url, function (result, b, response) {
-                        if (result.trim().toLowerCase() == App.web3Provider.publicConfigStore._state.selectedAddress)
-                            $(".btn-registerDomain-error").removeClass("error").text("Domain is available to register. Binding file found.");
-                        else
-                            $(".btn-registerDomain-error").addClass("error").text("Domain is available to register but " + url + " is showing the wrong address.");
-                    });
-                    $(".btn-registerDomainName").attr("disabled", null);
-                } else {
-                    $(".btn-registerDomain-error").addClass("error").text("Domain is already taken.");
-                }
+                web3.eth.getAccounts(function (error, accounts) {
+                    if (domain == accounts[0]) {
+                        $(".btn-registerDomain-error").addClass("error").text("Domain is registered to you but " + url + " does not exist or is not accessible (check CORS).");
+                        App.get(url, function (result, b, response) {
+                            if (result.trim().toLowerCase() == accounts[0])
+                                $(".btn-registerDomain-error").removeClass("error").text("Domain is registered to you. Binding file is OK.");
+                            else
+                                $(".btn-registerDomain-error").addClass("error").text("Domain is registered to you but " + url + " is showing the wrong address.");
+                        });
+                    } else if (domain.replace(/[0x]+/g, "") == "") {
+                        $(".btn-registerDomain-error").addClass("error").text("Domain is available to register but " + url + " does not exist or is not accessible (check CORS).");
+                        App.get(url, function (result, b, response) {
+                            if (result.trim().toLowerCase() == accounts[0])
+                                $(".btn-registerDomain-error").removeClass("error").text("Domain is available to register. Binding file found.");
+                            else
+                                $(".btn-registerDomain-error").addClass("error").text("Domain is available to register but " + url + " is showing the wrong address.");
+                        });
+                        $(".btn-registerDomainName").attr("disabled", null);
+                    } else {
+                        $(".btn-registerDomain-error").addClass("error").text("Domain is already taken.");
+                    }
+                });
             });
         });
     },
