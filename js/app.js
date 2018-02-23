@@ -209,7 +209,7 @@ App = {
                 recordDiv.find('.panel-body').prepend($('#cassFrameworkTemplate').html());
                 recordDiv.find('.framework-name').text(result.name);
                 recordDiv.find('.framework-description').text(result.description);
-                recordDiv.find('.record-url').attr("href", "https://cassproject.github.io/cass-editor/?framework=" + encodeURIComponent(record.url));
+                recordDiv.find('.record-url').attr("href", "https://cassproject.github.io/cass-editor/?view=true&frameworkId=" + encodeURIComponent(record.url));
                 if (result.competency != null)
                     recordDiv.find('.framework-competencies').text(result.competency.length);
             }
