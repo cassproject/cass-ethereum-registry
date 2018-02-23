@@ -204,9 +204,17 @@ App = {
             if (type === undefined)
                 type = result.type;
             recordDiv.find('.record-url').text(type);
+            if (result["@context"].indexOf("schema.cassproject.org") != -1 && type == "Framework") {
+                recordDiv.find('.record-url').text("CASS Competency Framework");
+                recordDiv.find('.panel-body').prepend($('#cassFrameworkTemplate').html());
+                recordDiv.find('.framework-name').text(result.name);
+                recordDiv.find('.framework-description').text(result.description);
+                recordDiv.find('.record-url').attr("href", "https://cassproject.github.io/cass-editor/?framework=" + encodeURIComponent(record.url));
+                if (result.competency != null)
+                    recordDiv.find('.framework-competencies').text(result.competency.length);
+            }
             if (result["@context"] == "https://w3id.org/openbadges/v2" && type == "Assertion") {
-
-                recordDiv.find('.record-url').text("OpenBadges 2.0 Badge");
+                recordDiv.find('.record-url').text("IMS OpenBadges 2.0 Badge");
                 recordDiv.find('.panel-body').prepend($('#badgeTemplate').html());
                 recordDiv.find('.badge-narrative').text(result.narrative);
                 recordDiv.find('.badge-issuedOn').text(new Date(result.issuedOn).toLocaleString());

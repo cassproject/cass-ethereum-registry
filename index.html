@@ -63,7 +63,10 @@
         .badge-name,
         .badge-description,
         .badge-issuer,
-        .badge-narrative {
+        .badge-narrative,
+        .framework-name,
+        .framework-description,
+        .framework-competencies {
             display: block;
         }
 
@@ -72,10 +75,16 @@
             float: right;
         }
 
+        .framework-name,
         .badge-name {
             font-weight: bold;
         }
 
+        .framework-competencies::after {
+            content: " Competencies.";
+        }
+
+        .framework-description,
         .badge-description {
             font-weight: lighter;
             font-style: italic;
@@ -300,12 +309,18 @@
         <span class="badge-expires"></span>
         <hr>
     </div>
+    <div id="cassFrameworkTemplate" style="display:none;">
+        <span class="framework-name"></span>
+        <span class="framework-description"></span>
+        <span class="framework-competencies"></span>
+        <hr>
+    </div>
     <div id="recordTemplate" style="display: none;">
         <div class="col-sm-12 col-md-12 col-lg-6 col-record">
             <div class="panel panel-default panel-record">
                 <div class="panel-heading">
                     <span class="panel-subtitle record-timestamp"></span>
-                    <h3 class="panel-title"><a class="record-url">URL</a></h3>
+                    <h3 class="panel-title"><a class="record-url" target="_blank">URL</a></h3>
                 </div>
                 <div class="panel-body">
                     <strong>Registering Agent</strong>: <span class="record-agent">The owner of this website claims</span><br/>
