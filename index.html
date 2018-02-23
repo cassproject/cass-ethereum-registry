@@ -57,6 +57,56 @@
             margin-bottom: 1rem;
         }
 
+        .badge-narrative,
+        .badge-issuedOn,
+        .badge-expires,
+        .badge-name,
+        .badge-description,
+        .badge-issuer,
+        .badge-narrative {
+            display: block;
+        }
+
+        .badge-image {
+            width: 100px;
+            float: right;
+        }
+
+        .badge-name {
+            font-weight: bold;
+        }
+
+        .badge-description {
+            font-weight: lighter;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .badge-issuer::before {
+            content: "Issuer: ";
+            font-weight: bold;
+        }
+
+        .badge-recipient::before {
+            content: "Recipient: ";
+            font-weight: bold;
+        }
+
+        .badge-narrative::before {
+            content: "Issuing Narrative: ";
+            font-weight: bold;
+        }
+
+        .badge-issuedOn::before {
+            content: "Issued: ";
+            font-weight: bold;
+        }
+
+        .badge-expires::before {
+            content: "Expires: ";
+            font-weight: bold;
+        }
+
     </style>
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -239,17 +289,28 @@
         </footer>
     </div>
 
+    <div id="badgeTemplate" style="display:none;">
+        <span class="badge-name"></span>
+        <span class="badge-description"></span>
+        <img src="" class="badge-image">
+        <span class="badge-issuer"></span>
+        <span class="badge-recipient"></span>
+        <span class="badge-narrative"></span>
+        <span class="badge-issuedOn"></span>
+        <span class="badge-expires"></span>
+        <hr>
+    </div>
     <div id="recordTemplate" style="display: none;">
-        <div class="col-sm-12 col-md-6 col-lg-4 col-record">
+        <div class="col-sm-12 col-md-12 col-lg-6 col-record">
             <div class="panel panel-default panel-record">
                 <div class="panel-heading">
                     <span class="panel-subtitle record-timestamp"></span>
                     <h3 class="panel-title"><a class="record-url">URL</a></h3>
                 </div>
                 <div class="panel-body">
-                    <strong>Agent</strong>: <span class="record-agent">The owner of this website claims</span><br/>
-                    <strong>Recipient</strong>: <span class="record-recipient">this individual</span><br/>
-                    <strong>Integrity</strong>: <span class="record-integrity">that has not been altered.</span><br/><br/>
+                    <strong>Registering Agent</strong>: <span class="record-agent">The owner of this website claims</span><br/>
+                    <strong>Registration Recipient</strong>: <span class="record-recipient">this individual</span><br/>
+                    <strong>Data Integrity</strong>: <span class="record-integrity">that has not been altered.</span><br/><br/>
                     <button class="btn btn-default btn-unregister" type="button" title="Detaches and clears the registration, but does not wipe the history!">Deregister</button>
                     <button class="btn btn-default btn-transfer" type="button" title="Transfers the registration to another domain name owner.">Transfer</button>
                     <button class="btn btn-default btn-update" type="button" title="Updates the hash of the registration to match the latest data.">Update</button>

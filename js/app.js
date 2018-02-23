@@ -40,6 +40,7 @@ App = {
     invl: null,
     lastAgent: null,
     recipientLookup: {},
+    recipientList: [],
     bindEvents: function () {
         web3.eth.getAccounts(function (error, accounts) {
             if (web3.eth.defaultAccount == null)
@@ -84,6 +85,7 @@ App = {
                 return App.contracts.Registry.deployed().then(function (instance) {
                     var hash = sha256.digest(recipient + instance.address);
                     App.recipientLookup[b64EncodeBuffer(hash)] = recipient;
+                    App.recipientList.push(recipient);
                     App.downloadRecords();
                 });
             });
@@ -174,33 +176,65 @@ App = {
                 web3.eth.getAccounts(function (error, accounts) {
                     var recordsRow = $('#records');
                     var recordDiv = recordsRow.prepend($('#recordTemplate').html()).children().first();
-                    recordDiv.find('.record-timestamp').text("Registered " + new Date(record.createdTs).toLocaleString());
-                    recordDiv.find('.record-agent').text(record.recipient);
-                    App.lookupAgent(record, recordDiv.find('.record-agent'));
-                    recordDiv.find('.record-recipient').text("").text("Finding...");
-                    App.lookupRecipient(record, recordDiv.find('.record-recipient'));
-                    recordDiv.find('.record-url').attr("href", record.url);
-                    recordDiv.find('.record-integrity').text("Determining...");
-                    App.determineIntegrity(record, recordDiv.find('.record-integrity'));
-                    if (accounts == null || !record.canUpdate || record.owner != accounts[0])
-                        recordDiv.find('.btn-update').hide();
-                    if (accounts == null || !record.canTransfer || record.owner != accounts[0])
-                        recordDiv.find('.btn-transfer').hide();
-                    if (accounts == null || !record.canUnregister || record.owner != accounts[0])
-                        recordDiv.find('.btn-unregister').hide();
-                    App.get(record.url, function (result, b, request) {
-                        var result = JSON.parse(result);
-                        var type = result["@type"];
-                        if (type === undefined)
-                            type = result.type;
-                        recordDiv.find('.record-url').text(type);
-                        //recordDiv.find('img').attr('src', data[i].picture);
-                    });
+                    App.populateDiv(record, recordDiv, accounts);
                 });
             });
         }).catch(function (err) {
             console.log(err.message);
         });
+    },
+    populateDiv: function (record, recordDiv, accounts) {
+        recordDiv.find('.record-timestamp').text("Registered " + new Date(record.createdTs).toLocaleString());
+        recordDiv.find('.record-agent').text(record.recipient);
+        App.lookupAgent(record, recordDiv.find('.record-agent'));
+        recordDiv.find('.record-recipient').text("").text("Finding...");
+        App.lookupRecipient(record, recordDiv.find('.record-recipient'));
+        recordDiv.find('.record-url').attr("href", record.url);
+        recordDiv.find('.record-integrity').text("Determining...");
+        App.determineIntegrity(record, recordDiv.find('.record-integrity'));
+        if (accounts == null || !record.canUpdate || record.owner != accounts[0])
+            recordDiv.find('.btn-update').hide();
+        if (accounts == null || !record.canTransfer || record.owner != accounts[0])
+            recordDiv.find('.btn-transfer').hide();
+        if (accounts == null || !record.canUnregister || record.owner != accounts[0])
+            recordDiv.find('.btn-unregister').hide();
+        App.get(record.url, function (result, b, request) {
+            var result = JSON.parse(result);
+            var type = result["@type"];
+            if (type === undefined)
+                type = result.type;
+            recordDiv.find('.record-url').text(type);
+            if (result["@context"] == "https://w3id.org/openbadges/v2" && type == "Assertion") {
+
+                recordDiv.find('.record-url').text("OpenBadges 2.0 Badge");
+                recordDiv.find('.panel-body').prepend($('#badgeTemplate').html());
+                recordDiv.find('.badge-narrative').text(result.narrative);
+                recordDiv.find('.badge-issuedOn').text(new Date(result.issuedOn).toLocaleString());
+                recordDiv.find('.badge-expires').text(new Date(result.expires).toLocaleString());
+                recordDiv.find('.badge-recipient').text(App.decodeBadgeRecipient(result.recipient));
+                recordDiv.find('.badge-narrative').text(result.narrative);
+                recordDiv.find('.badge-image').attr("src", result.image);
+                App.get(result.badge, function (badge, b, request) {
+                    badge = JSON.parse(badge);
+                    recordDiv.find('.badge-name').text(badge.name);
+                    if (badge.name != badge.description)
+                        recordDiv.find('.badge-description').text(badge.description);
+                    App.get(badge.issuer, function (issuer, b, request) {
+                        issuer = JSON.parse(issuer);
+                        recordDiv.find('.badge-issuer').text(issuer.name);
+                    });
+                });
+            }
+            //recordDiv.find('img').attr('src', data[i].picture);
+        });
+    },
+    decodeBadgeRecipient: function (recipient) {
+        for (var i = 0; i < App.recipientList.length; i++) {
+            var hash = sha256.hex(App.recipientList[i] + recipient.salt);
+            if ("sha256$" + hash.toLowerCase() == recipient.identity)
+                return App.recipientList[i];
+        }
+        return "Unknown.";
     },
     lookupAgent: function (record, div) {
         var registry;
@@ -216,7 +250,7 @@ App = {
         if (App.recipientLookup[record.recipient] != null)
             div.text(App.recipientLookup[record.recipient]);
         else
-            div.text(record.recipient);
+            div.text("Unknown.");
     },
     determineIntegrity: function (record, div) {
         var registry;
@@ -418,8 +452,10 @@ App = {
                 }, 100);
             }
             return;
-        } else if (App.getCache[url] != null)
+        } else if (App.getCache[url] != null) {
             success(App.getCache[url], 200, null);
+            return;
+        }
         App.getCache[url] = 300;
         $.get(url, function (a, b, c) {
             App.getCache[url] = a;
