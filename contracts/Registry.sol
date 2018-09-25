@@ -1,4 +1,5 @@
 pragma solidity ^0.4.17;
+pragma experimental ABIEncoderV2;
 
 contract Registry {
 
@@ -7,7 +8,7 @@ contract Registry {
         records.length++;
     }
 
-    struct Record {
+    struct RegistryRecord {
         address owner;
         uint createdTs;
         string url;
@@ -18,7 +19,7 @@ contract Registry {
         bool canUnregister;
     }
 
-    // Record Lookup Maps
+    // RegistryRecord Lookup Maps
     mapping(string => uint) byUrl;
     function getIndexByUrl(string url) public view returns (uint index){
         index = byUrl[url];
@@ -36,8 +37,8 @@ contract Registry {
         addr = domainOwner[url];
     }
 
-    // Records  
-    Record[] public records;
+    // RegistryRecords
+    RegistryRecord[] public records;
     function recordsLength() public view returns(uint length){length = records.length;}
     
     uint public numRecords;
@@ -67,7 +68,7 @@ contract Registry {
         //Owner must be registered.
         require(keccak256(ownerDomain[msg.sender]) != keccak256(""));
 
-        Record memory record;
+        RegistryRecord memory record;
         record.createdTs = now;
         record.owner = msg.sender;
         record.url = url;
@@ -107,7 +108,7 @@ contract Registry {
     // Unregister a given record
     function unregister(string url) public recordMustExist(url) ownerMustMatch(url){
         uint index = byUrl[url];
-        Record memory record = records[index];
+        RegistryRecord memory record = records[index];
         
         //Require the record be unregisterable.
         require(record.canUnregister == true);
@@ -150,14 +151,14 @@ contract Registry {
         canUnregister = records[index].canUnregister;
     }
     
-    function getRecordsFor(string identifier) public view returns(Record[] returnedRecords)
+    function getRecordsFor(string identifier) public view returns(RegistryRecord[] returnedRecords)
     {
         uint[] memory recordIndices = byRecipient[identifier];
         for (uint i = 0;i < recordIndices.length;i++)
             returnedRecords[i] = records[recordIndices[i]];
     }
     
-    function getRecordsMadeBy(address addr) public view returns(Record[] returnedRecords)
+    function getRecordsMadeBy(address addr) public view returns(RegistryRecord[] returnedRecords)
     {
         uint[] memory recordIndices = byOwner[addr];
         for (uint i = 0;i < recordIndices.length;i++)
