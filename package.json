@@ -16,6 +16,6 @@
     "lite-server": "^2.5.3"
   },
   "dependencies": {
-    "truffle": "^5.0.27"
+    "truffle": "^5.0.32"
   }
 }
